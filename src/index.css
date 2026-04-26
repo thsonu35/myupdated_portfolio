@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@theme {
+  --color-neon-blue: var(--neon-blue);
+  --color-neon-purple: var(--neon-purple);
+  --color-primary-bg: var(--primary-bg);
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-glass-bg: var(--glass-bg);
+  --color-glass-border: var(--glass-border);
+  --font-sans: 'Outfit', 'Inter', sans-serif;
+}
+
+:root {
+  /* Light Mode Variables */
+  --primary-bg: #f8fafc;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --neon-blue: #0ea5e9;
+  --neon-purple: #8b5cf6;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.1);
+}
+
+.dark {
+  /* Dark Mode Variables */
+  --primary-bg: #0a0a0a;
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+  --neon-blue: #00f5ff;
+  --neon-purple: #8b5cf6;
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+@layer base {
+  body {
+    @apply bg-primary-bg text-text-main antialiased overflow-x-hidden transition-colors duration-500;
+    font-family: 'Outfit', 'Inter', sans-serif;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-glass-bg backdrop-blur-md border border-glass-border rounded-xl transition-all duration-300;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+  }
+  
+  .dark .glass-panel {
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+  }
+
+  .glass-panel-hover {
+    @apply hover:-translate-y-2 hover:border-neon-blue/50 hover:shadow-[0_0_20px_rgba(0,245,255,0.2)];
+  }
+  
+  .dark .glass-panel-hover {
+    @apply hover:shadow-[0_0_15px_rgba(0,243,255,0.3)];
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-neon-blue to-neon-purple;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--primary-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neon-blue);
+}
+
+/* Base resets for 3D canvas */
+#canvas-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+}
