@@ -1,15 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSound } from '../context/SoundContext';
-import { GoogleGenAI } from '@google/genai';
 
 const commandsInfo = {
-  help: "Available commands: help, about, skills, projects, contact, clear, whoami, matrix, ai <message>",
-  about: "Backend Developer specializing in Node.js, Express, and Django.",
-  skills: "Tech stack: Python, Django, Node.js, PostgreSQL, MongoDB, React.",
-  projects: "Featured: API Engine, Log Monitoring System, Low-Code Workflow.",
-  contact: `Email: ${import.meta.env.VITE_CONTACT_EMAIL} | Phone: ${import.meta.env.VITE_PHONE}`,
-  whoami: "You are a guest user exploring the SST mainframe.",
+  help: "Commands: help, about, skills, projects, contact, clear, whoami, matrix, ai <msg>, ls, cd, pwd, date, echo, scan, ssh <ip>, crack, logs, cat, history",
+  about: "Backend Developer specializing in Node.js, Express, Django & scalable systems.",
+  skills: "Python, Django, Node.js, PostgreSQL, MongoDB, React, Redis, Docker",
+  projects: "Low-Code Engine | Log Monitoring | API Processing System",
+  contact: `Email: ${import.meta.env.VITE_CONTACT_EMAIL}`,
+  whoami: "guest@sst-os (Access Level: Limited)",
+  linkedin: "linkedin.com/in/sohan--thakur",
+  github: "github.com/thsonu35",
+};
+
+const fileSystem = {
+  "/home/sohan": ["projects", "skills.txt", "about.txt"],
+  "/home/sohan/projects": ["api-engine.js", "log-system.py"],
+};
+
+const fileContents = {
+  "/home/sohan/skills.txt": "Node.js, Django, MongoDB, PostgreSQL, Redis",
+  "/home/sohan/about.txt": "Backend Developer focused on scalable systems.",
 };
 
 const Terminal = ({ fullscreen = false }) => {
@@ -17,31 +28,61 @@ const Terminal = ({ fullscreen = false }) => {
   const [input, setInput] = useState('');
   const [isMatrixMode, setIsMatrixMode] = useState(false);
   const [isAiThinking, setIsAiThinking] = useState(false);
+
+  const [currentPath, setCurrentPath] = useState("/home/sohan");
+  const [cmdHistory, setCmdHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
   const { playType } = useSound();
 
-  // Initialize Gemini AI
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+  const askai = async (message) => {
+    try {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "mistralai/mistral-7b-instruct:free", // FREE model
+          messages: [
+            {
+              role: "user",
+              content: message
+            }
+          ]
+        })
+      });
 
-  // Boot sequence simulation
+      const data = await res.json();
+
+      return data?.choices?.[0]?.message?.content || "No response";
+
+    } catch (err) {
+      console.error(err);
+      return "AI error";
+    }
+  };
+  // Boot logs
   useEffect(() => {
-    const bootLogs = [
+    const logs = [
       "Initializing SST_OS v4.0.0...",
       "Mounting virtual file systems... OK",
       "Loading cryptographic keys... OK",
-      "Connection established. Security protocols active.",
-      "Type 'help' to see available commands or 'ai <message>' to chat."
+      "Connection established.",
+      "Type 'help' to begin."
     ];
 
     let i = 0;
-    const bootInterval = setInterval(() => {
-      setHistory(prev => [...prev, { type: 'system', text: bootLogs[i] }]);
+    const interval = setInterval(() => {
+      setHistory(prev => [...prev, { type: 'system', text: logs[i] }]);
       i++;
-      if (i >= bootLogs.length) clearInterval(bootInterval);
+      if (i >= logs.length) clearInterval(interval);
     }, 400);
 
-    return () => clearInterval(bootInterval);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -49,146 +90,269 @@ const Terminal = ({ fullscreen = false }) => {
   }, [history]);
 
   const handleCommand = async (e) => {
+
+    // ⬆️ history
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const newIndex = historyIndex + 1;
+      if (cmdHistory[newIndex]) {
+        setInput(cmdHistory[newIndex]);
+        setHistoryIndex(newIndex);
+      }
+      return;
+    }
+
+    // ⬇️ history
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const newIndex = historyIndex - 1;
+      if (newIndex >= 0) {
+        setInput(cmdHistory[newIndex]);
+        setHistoryIndex(newIndex);
+      } else {
+        setInput('');
+        setHistoryIndex(-1);
+      }
+      return;
+    }
+
+    // TAB autocomplete
     if (e.key === 'Tab') {
-      e.preventDefault(); // Autocomplete logic
-      const availableCmds = Object.keys(commandsInfo);
-      const match = availableCmds.find(cmd => cmd.startsWith(input.toLowerCase()));
+      e.preventDefault();
+      const allCmds = [...Object.keys(commandsInfo), 'ls', 'cd', 'pwd', 'scan', 'ssh', 'crack', 'logs', 'cat', 'history'];
+      const match = allCmds.find(cmd => cmd.startsWith(input.toLowerCase()));
       if (match) setInput(match);
       return;
     }
 
-    if (e.key !== 'Enter' && e.key !== 'Shift' && e.key !== 'Control' && e.key !== 'Alt' && e.key !== 'Meta') {
+    if (e.key !== 'Enter') {
       playType();
+      return;
     }
 
-    if (e.key === 'Enter') {
-      const cmdString = input.trim();
-      const cmdLower = cmdString.toLowerCase();
-      if (!cmdString) return;
+    const cmdString = input.trim();
+    if (!cmdString) return;
 
-      const newHistory = [...history, { type: 'user', text: `> ${cmdString}` }];
-      setHistory(newHistory);
-      setInput('');
+    const cmdLower = cmdString.toLowerCase();
 
-      if (cmdLower === 'clear') {
-        setHistory([]);
-      } else if (cmdLower === 'matrix') {
-        setIsMatrixMode(!isMatrixMode);
-        setHistory([...newHistory, { type: 'output', text: `Matrix protocol ${!isMatrixMode ? 'engaged' : 'disengaged'}.` }]);
-      } else if (cmdLower === 'sudo rm -rf /') {
-        setHistory([...newHistory, { type: 'error', text: 'Nice try. Incident reported to system administrator.' }]);
-      } else if (cmdLower.startsWith('ai ')) {
-        const query = cmdString.substring(3).trim();
-        if (!query) {
-          setHistory([...newHistory, { type: 'error', text: 'Usage: ai <your message>' }]);
-          return;
-        }
+    const newHistory = [...history, { type: 'user', text: `> ${cmdString}` }];
+    setHistory(newHistory);
+    setInput('');
 
-        setIsAiThinking(true);
-        try {
-          // Warning: doing this client side exposes the key. Use backend for production!
-          const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: `You are an AI assistant built into the portfolio terminal of Sohan Singh Thakur, a Backend Developer. Keep answers brief and technical. User asked: ${query}`
-          });
-          setHistory([...newHistory, { type: 'ai-output', text: `[AI] ${response.text}` }]);
-        } catch (err) {
-          setHistory([...newHistory, { type: 'error', text: `AI Error: ${err.message}` }]);
-        } finally {
-          setIsAiThinking(false);
-        }
-      } else if (commandsInfo[cmdLower]) {
-        // Simulate typing output
-        setTimeout(() => {
-          setHistory(prev => [...prev, { type: 'output', text: commandsInfo[cmdLower] }]);
-        }, 300);
-      } else {
-        setHistory([...newHistory, { type: 'error', text: `Command not found: ${cmdString}. Type "help" for a list of commands.` }]);
+    setCmdHistory(prev => [cmdString, ...prev]);
+    setHistoryIndex(-1);
+
+    // ===== BASIC =====
+    if (cmdLower === 'clear') return setHistory([]);
+
+    if (cmdLower === 'whoami') {
+      return setHistory([...newHistory, {
+        type: 'output',
+        text: navigator.userAgent
+      }]);
+    }
+
+    if (cmdLower === 'matrix') {
+      setIsMatrixMode(!isMatrixMode);
+      return setHistory([...newHistory, {
+        type: 'output',
+        text: `Matrix ${!isMatrixMode ? 'enabled' : 'disabled'}`
+      }]);
+    }
+
+    if (cmdLower === 'sudo rm -rf /') {
+      return setHistory([...newHistory, { type: 'error', text: 'Nice try 😏' }]);
+    }
+
+    // ===== FILE SYSTEM =====
+    if (cmdLower === 'ls') {
+      const files = fileSystem[currentPath] || [];
+      return setHistory([...newHistory, { type: 'output', text: files.join('   ') }]);
+    }
+
+    if (cmdLower.startsWith('cd ')) {
+      const path = cmdString.split(' ')[1];
+
+      if (path === '..') {
+        const parent = currentPath.split('/').slice(0, -1).join('/') || "/home";
+        setCurrentPath(parent);
+        return setHistory([...newHistory, { type: 'output', text: parent }]);
       }
+
+      const newPath = `${currentPath}/${path}`.replace(/\/+/g, '/');
+      if (fileSystem[newPath]) {
+        setCurrentPath(newPath);
+        return setHistory([...newHistory, { type: 'output', text: newPath }]);
+      }
+
+      return setHistory([...newHistory, { type: 'error', text: 'Directory not found' }]);
+    }
+
+    if (cmdLower === 'pwd') {
+      return setHistory([...newHistory, { type: 'output', text: currentPath }]);
+    }
+
+    if (cmdLower === 'cat') {
+      return setHistory([...newHistory, {
+        type: 'error',
+        text: 'Usage: cat <filename>'
+      }]);
+    }
+
+    if (cmdLower.startsWith('cat ')) {
+      const file = cmdString.split(' ')[1];
+      const fullPath = `${currentPath}/${file}`.replace(/\/+/g, '/');
+
+      if (fileContents[fullPath]) {
+        return setHistory([...newHistory, {
+          type: 'output',
+          text: fileContents[fullPath]
+        }]);
+      }
+
+      return setHistory([...newHistory, {
+        type: 'error',
+        text: `cat: ${file}: No such file`
+      }]);
+    }
+
+    // ===== UTIL =====
+    if (cmdLower.startsWith('echo ')) {
+      return setHistory([...newHistory, {
+        type: 'output',
+        text: cmdString.slice(5)
+      }]);
+    }
+
+    if (cmdLower === 'date') {
+      return setHistory([...newHistory, {
+        type: 'output',
+        text: new Date().toString()
+      }]);
+    }
+
+    if (cmdLower === 'history') {
+      return setHistory([...newHistory, {
+        type: 'output',
+        text: cmdHistory.join('\n')
+      }]);
+    }
+
+    // ===== HACKER COMMANDS =====
+    if (cmdLower === 'scan') {
+      ["Scanning network...", "22/tcp open ssh", "80/tcp open http", "Scan complete"]
+        .forEach((t, i) => setTimeout(() => {
+          setHistory(prev => [...prev, { type: 'output', text: t }]);
+        }, i * 300));
+      return;
+    }
+
+    if (cmdLower.startsWith('ssh ')) {
+      const ip = cmdString.split(' ')[1];
+      [`Connecting ${ip}`, "Authenticating...", "Access granted"]
+        .forEach((t, i) => setTimeout(() => {
+          setHistory(prev => [...prev, { type: 'output', text: t }]);
+        }, i * 400));
+      return;
+    }
+
+    if (cmdLower === 'crack') {
+      let c = 0;
+      const interval = setInterval(() => {
+        const fake = Math.random().toString(36).substring(2, 7);
+        setHistory(prev => [...prev, { type: 'output', text: `Trying: ${fake}` }]);
+        if (++c > 12) {
+          clearInterval(interval);
+          setHistory(prev => [...prev, { type: 'output', text: 'Password cracked: admin@123' }]);
+        }
+      }, 120);
+      return;
+    }
+
+    if (cmdLower === 'logs') {
+      let i = 0;
+      const interval = setInterval(() => {
+        setHistory(prev => [...prev, {
+          type: 'output',
+          text: `[${new Date().toLocaleTimeString()}] running...`
+        }]);
+        if (++i > 10) clearInterval(interval);
+      }, 400);
+      return;
+    }
+
+    // ===== STATIC =====
+    if (commandsInfo[cmdLower]) {
+      return setHistory([...newHistory, {
+        type: 'output',
+        text: commandsInfo[cmdLower]
+      }]);
+    }
+
+    // ===== AI =====
+    setIsAiThinking(true);
+
+    try {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "mistralai/mistral-7b-instruct:free",
+          messages: [{ role: "user", content: cmdString }]
+        })
+      });
+
+      const data = await res.json();
+
+      const text =
+        data?.choices?.[0]?.message?.content || "No response";
+
+      setHistory(prev => [...prev, {
+        type: 'ai-output',
+        text: `[AI] ${text}`
+      }]);
+
+    } catch (err) {
+      console.error(err);
+      setHistory(prev => [...prev, {
+        type: 'error',
+        text: `AI error`
+      }]);
+    } finally {
+      setIsAiThinking(false);
     }
   };
-
   const terminalClasses = fullscreen
     ? "w-full h-full p-8 flex flex-col"
     : "relative w-full max-w-4xl mx-auto py-24 px-6 md:px-12 z-10";
 
-  const matrixClasses = isMatrixMode ? "text-green-500 text-shadow-green" : "";
+  const matrixClasses = isMatrixMode ? "text-green-500" : "";
 
   return (
     <section id="terminal" className={fullscreen ? "h-screen pt-20 pb-4 px-4" : terminalClasses}>
-      {!fullscreen && (
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8 }}
-        >
-          <h2 className="text-3xl md:text-4xl font-bold mb-10 text-center text-text-main">
-            System <span className="text-gradient">Terminal</span>
-          </h2>
-        </motion.div>
-      )}
+      <motion.div className={`glass-panel border border-neon-blue/30 rounded-xl overflow-hidden bg-[#050505]/90 flex flex-col ${fullscreen ? 'h-full' : 'h-96'}`}>
 
-      <motion.div 
-        layout
-        className={`glass-panel border border-neon-blue/30 rounded-xl overflow-hidden bg-[#050505]/90 shadow-[0_0_20px_rgba(0,243,255,0.1)] flex flex-col ${fullscreen ? 'h-full' : 'h-96'}`}
-      >
-        {/* Terminal Header */}
-        <div className="bg-white/5 border-b border-white/10 px-4 py-2 flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-red-500"></div>
-          <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-          <div className="w-3 h-3 rounded-full bg-green-500"></div>
-          <span className="ml-4 text-xs font-mono text-gray-400">root@sst-os:~</span>
-        </div>
-
-        {/* Terminal Body */}
-        <div className={`p-6 font-mono text-sm overflow-y-auto flex-1 custom-scrollbar flex flex-col ${matrixClasses}`} onClick={() => inputRef.current?.focus()}>
+        <div className="p-6 font-mono text-sm overflow-y-auto flex-1 flex flex-col">
           {history.map((line, i) => (
-            <motion.div 
-              key={i} 
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className={`mb-2 leading-relaxed ${
-                isMatrixMode ? 'text-green-500' :
-                line.type === 'user' ? 'text-neon-blue font-bold' : 
-                line.type === 'error' ? 'text-red-400' : 
-                line.type === 'ai-output' ? 'text-neon-purple' :
-                'text-gray-300'
-              }`}
-            >
-              {line.text}
-            </motion.div>
+            <div key={i}>{line.text}</div>
           ))}
-          
-          {isAiThinking && (
-            <div className="text-neon-purple flex gap-1 mb-2">
-              <span>[AI processing</span>
-              <span className="animate-bounce">.</span>
-              <span className="animate-bounce" style={{ animationDelay: '0.2s' }}>.</span>
-              <span className="animate-bounce" style={{ animationDelay: '0.4s' }}>.]</span>
-            </div>
-          )}
 
-          <div className={`flex items-center mt-2 ${isMatrixMode ? 'text-green-500' : 'text-neon-blue'}`}>
-            <span className="mr-2">&gt;</span>
+          {isAiThinking && <div>AI processing...</div>}
+
+          <div className="flex mt-2">
+            <span>&gt;</span>
             <input
               ref={inputRef}
-              type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleCommand}
-              disabled={isAiThinking}
-              className={`bg-transparent border-none outline-none flex-1 font-mono ${isMatrixMode ? 'text-green-500' : 'text-gray-200'} ${isAiThinking ? 'opacity-50' : ''}`}
-              spellCheck="false"
-              autoComplete="off"
-              autoFocus
-            />
-            <motion.span 
-              animate={{ opacity: [1, 0] }} 
-              transition={{ repeat: Infinity, duration: 0.8 }}
-              className={`w-2 h-4 inline-block ml-1 ${isMatrixMode ? 'bg-green-500' : 'bg-neon-purple'}`}
+              className="bg-transparent outline-none flex-1"
             />
           </div>
+
           <div ref={bottomRef} />
         </div>
       </motion.div>

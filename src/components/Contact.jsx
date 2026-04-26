@@ -75,17 +75,17 @@ const Contact = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 group">
-              <div className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+            {/* <div className="flex items-center gap-4 group"> */}
+            {/* <div className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
                 <FaPhone className="text-xl" />
-              </div>
-              {/* <div>
+              </div> */}
+            {/* <div>
                 <p className="text-sm text-gray-400">Phone</p>
                 <a href="tel:+0000000000" className="text-lg font-medium text-white hover:text-purple-400 transition-colors">
                   +91-000000000
                 </a>
               </div> */}
-            </div>
+            {/* </div> */}
           </div>
 
           <div className="flex-[1.5]">

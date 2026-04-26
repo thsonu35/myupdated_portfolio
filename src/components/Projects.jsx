@@ -5,27 +5,27 @@ import { useSound } from '../context/SoundContext';
 const projects = [
   {
     title: "Low-Code Workflow & API Engine",
-    description: "A robust backend engine allowing dynamic creation and execution of workflows, simplifying API orchestration.",
-    details: "Built with Node.js and Express. Features a drag-and-drop workflow builder, custom script execution in sandboxed environments, and extensive third-party integration support. Reduced API integration time by 40%.",
-    tags: ["Node.js", "Express", "MongoDB", "REST APIs"]
+    description: "Developed a scalable backend engine to automate workflow creation and API orchestration for internal business processes.",
+    details: "Built using Node.js and Express, allowing users to create workflows with dynamic conditions and API chaining. Implemented secure sandboxed script execution and role-based access control. Optimized API handling which reduced manual integration effort by ~35% and improved processing speed by 25%.",
+    tags: ["Node.js", "Express", "MongoDB", "REST APIs",]
   },
   {
-    title: "API Integration & Data Processing",
-    description: "System for handling large-scale data processing and seamless integration with third-party APIs (REST/SOAP).",
-    details: "Developed using Python and Django. Handles over 1M+ daily transactions. Implemented Celery for async task queues and Redis for caching, ensuring high availability and fault tolerance.",
-    tags: ["Python", "Django", "PostgreSQL", "Celery"]
+    title: "API Integration & Data Processing System",
+    description: "Designed a high-volume data processing system handling multiple third-party API integrations.",
+    details: "Developed with Django and PostgreSQL, processing ~500K–1M records daily. Used Celery with Redis for background jobs and retry mechanisms to handle failures. Improved system reliability by implementing queue-based architecture and reduced API failure impact by 40%.",
+    tags: ["Python", "Django", "PostgreSQL", "Redis"]
   },
   {
-    title: "Log Monitoring & Error Handling",
-    description: "Centralized logging service for real-time monitoring, error tracking, and alerting across microservices.",
-    details: "Built with FastAPI to handle high throughput asynchronous log ingestion. Integrated Elasticsearch for fast querying and visualized data using custom Kibana dashboards.",
-    tags: ["FastAPI", "Elasticsearch", "Redis", "Docker"]
+    title: "Log Monitoring & Error Tracking System",
+    description: "Created a centralized logging system for tracking errors and monitoring microservices in real-time.",
+    details: "Built with FastAPI for high-speed log ingestion. Integrated Elasticsearch for indexing and Kibana for visualization. Implemented alerting system for critical errors, reducing debugging time by 50% and improving system observability.",
+    tags: ["FastAPI", "kafka", "Docker", "Logging"]
   },
   {
-    title: "Backend API Service",
-    description: "High-performance API backend built with FastAPI, featuring asynchronous processing and WebSocket support.",
-    details: "Designed a microservices architecture. Features real-time WebSocket communication for live data feeds and SQLAlchemy for complex data relationships.",
-    tags: ["FastAPI", "Python", "SQLAlchemy", "WebSockets"]
+    title: "Real-Time Backend API Service",
+    description: "Developed a real-time backend service supporting live data updates and asynchronous operations.",
+    details: "Built using FastAPI and SQLAlchemy with WebSocket integration for real-time communication. Designed modular microservices structure and optimized database queries, reducing response time by ~30% under load.",
+    tags: ["FastAPI", "Python", "SQLAlchemy", "WebSockets", "Microservices"]
   }
 ];
 
