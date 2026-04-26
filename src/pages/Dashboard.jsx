@@ -102,7 +102,7 @@ const Dashboard = () => {
             <div className="grid grid-cols-2 gap-8 mt-12">
               <RadialProgress value={4} label="Projects" color="#00f3ff" />
               <RadialProgress value={50} label="APIs Built" color="#9d00ff" suffix="+" />
-              <RadialProgress value={4 / 2} label="Years Exp" color="#ff00ff" suffix="+" />
+              <RadialProgress value={2} label="Years Exp" color="#ff00ff" suffix="+" />
               <RadialProgress value={78} label="Uptime %" color="#00ff00" />
             </div>
           </motion.div>

@@ -79,12 +79,12 @@ const Contact = () => {
               <div className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
                 <FaPhone className="text-xl" />
               </div>
-              <div>
+              {/* <div>
                 <p className="text-sm text-gray-400">Phone</p>
-                <a href="tel:+918871400458" className="text-lg font-medium text-white hover:text-purple-400 transition-colors">
-                  +91-8871400458
+                <a href="tel:+0000000000" className="text-lg font-medium text-white hover:text-purple-400 transition-colors">
+                  +91-000000000
                 </a>
-              </div>
+              </div> */}
             </div>
           </div>
 
